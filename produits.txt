@@ -1,3 +1,4 @@
 10 chipps 15.000000
 43 jus_orange 2.000000
 34 harira 3.000000
+65 test 20.000000

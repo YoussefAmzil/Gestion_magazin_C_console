@@ -55,8 +55,9 @@ void addcmdToList(LignecmdElement **List , Lignecmd *cmd){
 		LignecmdElement *new;
 		new=(LignecmdElement*)malloc(sizeof(LignecmdElement));
 		new->lcmd=cmd;
-		new->next=NULL;
-		(trouverFin(*List))->next=new;
+		new->next=(*List);
+		(*List)=new;
+		//(trouverFin(*List))->next=new;
 	
 	}
 }
@@ -65,18 +66,20 @@ void displaycmd(Lignecmd *c){
 	if(c!=NULL) 
 	{
 		displayproduit(c->p);
-		printf("quantite: %d \n sous total: %2.f \n\n",c->qte,c->stotal);
+		printf("quantite: %d \nsous total: %2.f \n\n",c->qte,c->stotal);
 	}
 	else printf("la ligne commande est null ou n'existe pas");
 }
 
-void diplaycmdList(LignecmdElement * L){
-
-	while(L!=NULL){
+void diplaycmdList(LignecmdElement **L){
+	LignecmdElement *ptr=*L;
+	if((*L)==NULL) printf("NULL\n");
+	while(ptr!=NULL){
 		printf("----------------------\n");
-		displaycmd(L->lcmd);
+		displaycmd(ptr->lcmd);
+		//printf("%p\n",ptr->lcmd);
 		printf("----------------------\n");
-		L=L->next;
+		ptr=ptr->next;
 	}
 }
 
@@ -89,15 +92,21 @@ float gettotal(LignecmdElement *L){
 	return t;
 }
 
-void savelcmdtodb(LignecmdElement *l){
+void savelcmdtodb(Lignecmd *l){
 	l_out=fopen("lcmds.txt","a");
-	while(l!=NULL){
-		fprintf(l_out,"%d %d %d %f\n",(l)->lcmd->codeV,(l)->lcmd->p->code,(l)->lcmd->qte,(l)->lcmd->stotal);
-		(l)=(l)->next;
-	}
+		fprintf(l_out,"%d %d %d %f\n",(l)->codeV,(l)->p->code,(l)->qte,(l)->stotal);
 	fflush(l_out);
 	fclose(l_out);
 }
+
+void savelcmdltodb(LignecmdElement **l){
+	LignecmdElement *ptr=*l;
+	while(ptr){
+		savelcmdtodb(ptr->lcmd);
+		ptr=ptr->next;
+	}
+}
+
 
 void getlcmdfromdb(LignecmdElement **pe){
 	l_in=fopen("lcmds.txt","r");
@@ -122,6 +131,16 @@ Lignecmd *isexistinlcmd(LignecmdElement **l,int code){
 	return NULL;
 }
 
+LignecmdElement *getlcmdinv(LignecmdElement **l,int cv){
+	LignecmdElement *n=NULL;
+	while((*l)!=NULL){
+		if((*l)->lcmd->codeV==cv) addcmdToList(&n,(*l)->lcmd);
+		(*l)=(*l)->next;
+	}
+}
+
+
+
 LignecmdElement *getlcmdwithvente(int c){
 	LignecmdElement *pe=NULL;
 	int tmpc;
@@ -139,17 +158,48 @@ LignecmdElement *getlcmdwithvente(int c){
 	return pe;
 }
 
+Lignecmd * isexistinv(LignecmdElement **p,int cp){
+	while((*p)!=NULL){
+		if((*p)->lcmd->p->code==cp){
+			return (*p)->lcmd;
+		}
+		(*p)=(*p)->next;
+	}
+	return NULL;
+}
+
+
+void deletelcmdfromv(LignecmdElement **l,int c){
+	LignecmdElement *ptr,*tmp;
+	ptr=*l;
+	if(ptr->lcmd->p->code!=c){
+		while(ptr->next!=NULL){
+			if(ptr->next->lcmd->p->code==c){
+				tmp=ptr->next->next;
+				free(ptr->next);
+				ptr->next=tmp;
+				break;
+			}
+			ptr=ptr->next;
+		}
+	}
+	else if(ptr->lcmd->p->code==c){
+		*l=(*l)->next;
+	}	
+}
 
 //int main(){
-//	Lignecmd *l1,*l2;
+//	Lignecmd *l1,*l2,*l3;
 //	Product *p,*p2;
 //	LignecmdElement *L=NULL;
 //	p=createproduit(123,"chips",28.6);
 //	p2=createproduit(1,"danone",2.6);
 //	l1=createlcmd(2,3,p);
 //	l2=createlcmd(1,9,p2);
-//	savelcmdtodb(l1);
-//	getlcmdfromdb(&L);
-//	diplaycmdList(L);
+//	l3=createlcmd(1,3,p);
+//	addcmdToList(&L,l1);
+//	addcmdToList(&L,l2);
+//	addcmdToList(&L,l3);
+//	diplaycmdList(&L);
 //	return 0;
 //}

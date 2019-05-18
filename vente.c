@@ -3,7 +3,6 @@
 #include "string.h"
 #include "Lignecmd.c"
 
-
 FILE *v_out;
 FILE *v_in;
 
@@ -14,6 +13,7 @@ typedef struct Vente
     char* date_c;
     LignecmdElement *lcmd;
     float total;
+
 } Vente;
 typedef struct VenteElement
 {
@@ -75,15 +75,21 @@ void saveventetodb(Vente *l){
 	fprintf(v_out,"%d %d %s %f\n",l->code,l->c->code,"bonjour",l->total);
 	fflush(v_out);
 	fclose(v_out);
-	savelcmdtodb(l->lcmd);
+	savelcmdltodb(&(l->lcmd));
+}
+
+void saveventeltodb(VenteElement **l){
+	VenteElement *ptr=*l;
+	while(ptr!=NULL){
+		saveventetodb(ptr->vente);
+		ptr=ptr->next;
+	}
 }
 
 void diplayOnevente(Vente **v){
-	printf("\n----------------------\nCode : %d\nClient : %s %s\n",(*v)->code,(*v)->c->nom,(*v)->c->prenom);
-	diplaycmdList((*v)->lcmd);
-	printf("----------------------\n");
-	printf("TOTAL::%.2f\n",(*v)->total);
-	printf("----------------------\n");
+	printf("\n----------------------\nCode vente : %d\nClient : %s %s\n",(*v)->code,(*v)->c->nom,(*v)->c->prenom);
+	LignecmdElement *r=(*v)->lcmd;
+	diplaycmdList(&r);
 }
 
 //void diplayproductList(VenteElement * L){
@@ -127,6 +133,34 @@ Vente* getvente(int c){
 		o=o->next;
 	}
 	return NULL;
+}
+
+Vente* getvfromlist(VenteElement **l,int y){
+	while((*l)!=NULL){
+		if((*l)->vente->code==y) return (*l)->vente;
+		(*l)=(*l)->next;
+	}
+	return NULL;
+}
+
+
+void deletevfromvl(VenteElement **l,int c){
+	VenteElement *ptr,*tmp;
+	ptr=*l;
+	if(ptr->vente->code!=c){
+		while(ptr->next!=NULL){
+			if(ptr->next->vente->code==c){
+				tmp=ptr->next->next;
+				free(ptr->next);
+				ptr->next=tmp;
+				break;
+			}
+			ptr=ptr->next;
+		}
+	}
+	else if(ptr->vente->code==c){
+		*l=(*l)->next;
+	}	
 }
 
 
